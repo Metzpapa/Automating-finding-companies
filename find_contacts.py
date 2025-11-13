@@ -37,7 +37,7 @@ TRACKING_FILE = "processed_companies.json"
 
 # Number of companies to process in this run (set to None to process all)
 # Use this to test on a small batch first, then increase or set to None
-LIMIT_COMPANIES = 10
+LIMIT_COMPANIES = 180
 
 # Prompt template for finding the best contact people
 # Available variables: {company_name}, {website}, {location}, {description}
