@@ -33,7 +33,7 @@ OUTPUT_CSV = "leads_campaign2.csv"
 TRACKING_FILE = "processed_companies.json"
 
 # Number of companies to process in this run (set to None to process all)
-LIMIT_COMPANIES = 180
+LIMIT_COMPANIES = 10
 
 # Prompt template for Campaign 2
 CONTACT_PROMPT_TEMPLATE = """I am building a company that allows vacation rental property managers the ability to have their cleaners simply scan after they're clean, and it detects if they completed their clean correctly and also if there's any damages to the property. This is super helpful for property managers and we're looking for people to contact.
@@ -91,19 +91,19 @@ def create_contact_prompt(company_data):
 
 
 def query_gpt5_for_contact(prompt, company_name):
-    """Query GPT-5 with web search."""
+    """Query GPT-5.1 (thinking enabled) with web search."""
     print(f"  🔍 Searching for contact at: {company_name}")
     client = OpenAI()
     try:
         resp = client.responses.create(
-            model="gpt-5", 
+            model="gpt-5.1",
             input=prompt,
             tools=[{"type": "web_search"}],
         )
         print(f"  ✓ Received response for {company_name}")
         return resp.output_text
     except Exception as e:
-        print(f"  ✗ Error querying GPT-5 for {company_name}: {str(e)}")
+        print(f"  ✗ Error querying GPT-5.1 for {company_name}: {str(e)}")
         return None
 
 
@@ -129,7 +129,7 @@ def parse_contact_response(response_text, company_name):
                         'email': contact.get('email', ''),
                         'title': contact.get('title', ''),
                         'num_properties': str(contact.get('num_properties', '')),
-                        'contact_priority': str(contact.get('contact_priority', '3')), # Default to 3 if missing
+                        'contact_priority': str(contact.get('contact_priority', '3')),  # Default to 3 if missing
                         'casual_company_name': contact.get('casual_company_name', ''),
                         'sample_property_address': contact.get('sample_property_address', ''),
                         'property_name_short': contact.get('property_name_short', ''),
@@ -188,8 +188,8 @@ def read_companies_csv(filename):
 def append_leads_to_csv(leads, filename):
     """Append lead data to the output CSV file."""
     fieldnames = [
-        'contact_priority', 'first_name', 'last_name', 'email', 'title', 
-        'num_properties', 'casual_company_name', 
+        'contact_priority', 'first_name', 'last_name', 'email', 'title',
+        'num_properties', 'casual_company_name',
         'sample_property_address', 'property_name_short', 'property_url',
         'company_name', 'location', 'website', 'company_phone', 'company_email', 'description'
     ]
@@ -197,7 +197,7 @@ def append_leads_to_csv(leads, filename):
     with csv_lock:
         # Check if file exists to write header
         file_exists = os.path.isfile(filename)
-        
+
         with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
             if not file_exists:
@@ -231,9 +231,9 @@ def sort_csv_by_priority(filename):
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(data)
-        
+
         print(f"✅ File sorted successfully.")
-        
+
     except Exception as e:
         print(f"⚠️  Could not sort file: {str(e)}")
 
@@ -250,7 +250,7 @@ def process_company(company_data, idx, total):
     leads = []
     for contact in contacts:
         lead = {
-            **contact, # Unpack contact fields
+            **contact,  # Unpack contact fields
             'company_name': company_data.get('company_name', ''),
             'location': company_data.get('location', ''),
             'website': company_data.get('website', ''),
@@ -273,16 +273,16 @@ def process_company(company_data, idx, total):
 def main():
     start_time = datetime.now()
 
-    print("="*70)
+    print("=" * 70)
     print(f"Campaign 2: Contact Finder + Addresses ({MAX_WORKERS} workers)")
-    print("="*70)
+    print("=" * 70)
     print(f"Input: {INPUT_CSV}")
     print(f"Output: {OUTPUT_CSV}")
     print(f"Tracking: {TRACKING_FILE}")
 
     all_companies = read_companies_csv(INPUT_CSV)
     processed_companies = load_processed_companies(TRACKING_FILE)
-    
+
     # Filter out processed companies
     companies_to_process = [
         c for c in all_companies
@@ -323,12 +323,12 @@ def main():
     sort_csv_by_priority(OUTPUT_CSV)
 
     end_time = datetime.now()
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(f"✅ CAMPAIGN 2 COMPLETE!")
     print(f"Found {total_leads_found} leads")
     print(f"Results saved and sorted in: {OUTPUT_CSV}")
     print(f"Duration: {end_time - start_time}")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":
